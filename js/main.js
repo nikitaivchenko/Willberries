@@ -1,3 +1,5 @@
+'use strict'
+
 const mySwiper = new Swiper('.swiper-container', {
 	loop: true,
 
@@ -33,25 +35,26 @@ modalCart.addEventListener('click', function(event) {
 
 //scroll smooth
 
-const scrollLinks = document.querySelectorAll('a.scroll-link');
 
-(function() {
-  for(let i = 0; i < scrollLinks.length; i++) {
-    scrollLinks[i].addEventListener('click', function(event) {
+{
+const scrollLinks = document.querySelectorAll('a.scroll-link');
+  for (const scrollLink of scrollLinks) {
+    scrollLink.addEventListener('click', function(event) {
       event.preventDefault();
-      const id = scrollLinks[i].getAttribute('href');
+      const id = scrollLink.getAttribute('href');
       document.querySelector(id).scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         });
       });
   }
-})()
+}
+
 
 //goods
 
 const more = document.querySelector('.more');
-const navigationItem = document.querySelectorAll('.navigation-item');
+const navigationLink = document.querySelectorAll('.navigation-link');
 const longGoodsList = document.querySelector('.long-goods-list');
 
 const getGoods = async function() {
@@ -72,12 +75,14 @@ const createCard = function (objCard) {
 
   card.innerHTML = `
         <div class="goods-card">
-						<span class="label">New</span>
-						<img src="img/image-120.jpg" alt="image: Faded Beach Trousers" class="goods-image">
-						<h3 class="goods-title">Faded Beach Trousers</h3>
-						<p class="goods-description">Navy/Ochre/Black/Khaki</p>
-						<button class="button goods-card-btn add-to-cart" data-id="007">
-						<span class="button-price">$139</span>
+            ${objCard.label ? 
+              `<span class="label">${objCard.label}</span>` : 
+              ''}
+						<img src="db/${objCard.img}" alt="${objCard.name}" class="goods-image">
+						<h3 class="goods-title">${objCard.name}</h3>
+						<p class="goods-description">${objCard.description}</p>
+						<button class="button goods-card-btn add-to-cart" data-id="${objCard.id}">
+						<span class="button-price">$${objCard.price}</span>
 						</button>
 				</div>
   `;
@@ -86,8 +91,36 @@ const createCard = function (objCard) {
 
 const renderCards = function (data) {
   longGoodsList.textContent = '';
-  const cards = data.map(createCard)
+  const cards = data.map(createCard);
+  longGoodsList.append(...cards);
   document.body.classList.add('show-goods');
 };
 
-renderCards();
+
+more.addEventListener('click', function(event) {
+  event.preventDefault();
+  getGoods().then(renderCards);
+});
+
+const filterCards = function (field, value) {
+  getGoods().then(function (data) {
+    const filteredGoods = data.filter(function(good){
+      return good[field] === value;
+    });
+    return filteredGoods;
+  })
+  .then(renderCards);
+};
+
+navigationLink.forEach(function (link) {
+  link.addEventListener('click', function(event) {
+    event.preventDefault();
+    if(link.textContent == 'All') {
+      getGoods().then(renderCards);
+    } else {
+      const field = link.dataset.field;
+      const value = link.textContent;
+      filterCards(field, value);
+    }
+  });
+});
